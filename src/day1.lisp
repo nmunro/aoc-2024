@@ -15,17 +15,20 @@
               :finally (return (list list1 list2))))))
 
 (defun sort-lists (lists)
-    (list (sort (car lists) '<) (sort (cadr lists) '<)))
+    (list (sort (car lists) '<)
+          (sort (cadr lists) '<)))
 
 (defun total (data)
     (apply #'+ data))
 
 (defun get-difference (lists)
-    (loop :for num1 :in (car lists) :for num2 :in (cadr lists) :collect (abs (- num2 num1))))
+    (loop :for num1 :in (car lists)
+          :for num2 :in (cadr lists)
+          :collect (abs (- num2 num1))))
 
 (defun get-similarity (lists)
-    (flet ((process-line (x y) (abs (* x y))))
-        (loop :for num :in (car lists) :collect (process-line num (count-if (lambda (x) (= x num)) (cadr lists))))))
+    (loop :for num :in (car lists)
+          :collect (* num (count-if (lambda (x) (= x num)) (cadr lists)))))
 
 (defun day1 (file)
     (list (arrows:-> (get-lists file) sort-lists get-difference total)
