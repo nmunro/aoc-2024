@@ -23,11 +23,9 @@
 (defun get-difference (lists)
     (loop :for num1 :in (car lists) :for num2 :in (cadr lists) :collect (abs (- num2 num1))))
 
-(defun process-line (x y)
-    (abs (* x y)))
-
 (defun get-similarity (lists)
-    (loop :for num :in (car lists) :collect (process-line num (count-if (lambda (x) (= x num)) (cadr lists)))))
+    (flet ((process-line (x y) (abs (* x y))))
+        (loop :for num :in (car lists) :collect (process-line num (count-if (lambda (x) (= x num)) (cadr lists))))))
 
 (defun day1 (file)
     (list (arrows:-> (get-lists file) sort-lists get-difference total)
