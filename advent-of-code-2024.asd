@@ -2,11 +2,12 @@
   :version "0.0.1"
   :author "nmunro"
   :license "BSD3-Clause"
-  :depends-on (:cl-arrows
+  :depends-on (:arrows
                :cl-utilities)
   :components ((:module "src"
                 :components
                 ((:file "day1")
+                 (:file "day2")
                  (:file "main"))))
   :description "Generate a skeleton for modern project"
   :in-order-to ((test-op (test-op "advent-of-code-2024/tests"))))

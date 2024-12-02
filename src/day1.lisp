@@ -4,7 +4,7 @@
 
 (in-package advent-of-code-2024/day1)
 
-(defun get-lists (file)
+(defun load-data (file)
     (with-open-file (data file :direction :input :if-does-not-exist :error)
       (flet ((split-line (line) (remove-if (lambda (str) (string-equal str "")) (cl-utilities:split-sequence #\Space line))))
         (loop :for raw-line = (read-line data nil)
@@ -14,7 +14,7 @@
                     :collect (parse-integer (cadr line)) :into list2
               :finally (return (list list1 list2))))))
 
-(defun sort-lists (lists)
+(defun sort-data (lists)
     (list (sort (car lists) '<)
           (sort (cadr lists) '<)))
 
@@ -31,5 +31,5 @@
           :collect (* num (count-if (lambda (x) (= x num)) (cadr lists)))))
 
 (defun day1 (file)
-    (list (arrows:-> (get-lists file) sort-lists get-difference total)
-          (arrows:-> (get-lists file) sort-lists get-similarity total)))
+    (list (arrows:-> (load-data file) sort-data get-difference total)
+          (arrows:-> (load-data file) sort-data get-similarity total)))
