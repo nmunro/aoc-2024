@@ -11,25 +11,23 @@
               :until (eq raw-line nil)
               :collect (loop :for level :in (split-line raw-line) :collect (parse-integer level))))))
 
-(defun get-level-pairs (report)
-  (loop :for level :on report :while (rest level) :collect (list (first level) (second level))))
-
 (defun check-safety-margin (report)
   (flet ((within-safe-margin-p (x y)
-          (and (>= 3 (abs (- x y))) (not (= x y)))))
+          (and (>= 3 (abs (- x y))) (not (= x y))))
+         (get-level-pairs (report)
+          (loop :for level :on report :while (rest level) :collect (list (first level) (second level)))))
     (let ((levels (loop :for pair :in (get-level-pairs report) :collect (within-safe-margin-p (car pair) (cadr pair)))))
-        (eq nil (position nil levels)))))
+      (eq nil (position nil levels)))))
 
 (defun is-safe-p (report)
   (cond ((and (equal report (sort (copy-list report) #'<)) (check-safety-margin report)) t)
         ((and (equal report (sort (copy-list report) #'>)) (check-safety-margin report)) t)
         (t nil)))
 
-(defun report-permutations (report)
-  (loop :for i :from 0 :below (length report) :collect (append (subseq report 0 i) (nthcdr (1+ i) report))))
-
 (defun is-safe-with-one-bad-report-p (report)
-  (not (eq nil (position t (loop :for r :in (report-permutations report) :collect (is-safe-p r))))))
+  (flet ((report-permutations (report)
+           (loop :for i :from 0 :below (length report) :collect (append (subseq report 0 i) (nthcdr (1+ i) report)))))
+    (not (eq nil (position t (loop :for r :in (report-permutations report) :collect (is-safe-p r)))))))
 
 (defun day2 (file)
   (let ((data (load-data file)))
