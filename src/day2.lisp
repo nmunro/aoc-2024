@@ -34,6 +34,15 @@
         ((and (is-decreasing-p report) (check-safety-margin report)) t)
         (t nil)))
 
+(defun report-permutations (report)
+  (loop :for i :from 0 :below (length report)
+        :collect (append (subseq report 0 i) (nthcdr (1+ i) report))))
+
+(defun is-safe-with-one-bad-report-p (report)
+  (let ((tmp (loop :for r :in (report-permutations report) :collect (is-safe-p r))))
+      (not (eq nil (position t tmp)))))
+
 (defun day2 (file)
   (let ((data (load-data file)))
-    (list (length (loop :for report :in data :if (eq t (is-safe-p report)) :collect t)) nil)))
+    (list (length (loop :for report :in data :if (eq t (is-safe-p report)) :collect t))
+          (length (loop :for report :in data :if (eq t (is-safe-with-one-bad-report-p report)) :collect t)))))
