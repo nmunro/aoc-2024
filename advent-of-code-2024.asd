@@ -3,6 +3,7 @@
   :author "nmunro"
   :license "BSD3-Clause"
   :depends-on (:arrows
+               :cl-ppcre
                :cl-utilities)
   :components ((:module "src"
                 :components
