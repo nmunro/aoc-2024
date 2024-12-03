@@ -5,7 +5,7 @@
 (in-package advent-of-code-2024/day3)
 
 (defun load-data (file)
-  (string-trim '(#\Newline) (uiop:read-file-string file)))
+    (string-trim '(#\Newline) (uiop:read-file-string file)))
 
 (defun process-mul (mul)
     (apply #'* (mapcar #'parse-integer (cl-utilities:split-sequence #\, (string-trim '(#\( #\)) (subseq mul 3))))))
