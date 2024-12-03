@@ -16,7 +16,9 @@
     (apply #'+ (mapcar #'process-mul muls))))
 
 (defun part-2 (data)
-  (let ((matches (ppcre:all-matches-as-strings "(?<=do\\(\\))(.*?)(?=don't\\(\\)|$)" data)))
+  (let ((matches (ppcre:all-matches-as-strings "mul\\(([0-9]+),([0-9]+)\\)|do\\(\\)|don't\\(\\)" data)))
+    (dolist (match matches)
+      (format t "Match: ~A~%" match))
     (apply #'+ (mapcar #'part-1 matches))))
 
 (defun day3 (file)
