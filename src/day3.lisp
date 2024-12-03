@@ -8,12 +8,10 @@
   (string-trim '(#\Newline) (uiop:read-file-string file)))
 
 (defun process-mul (mul)
-  (let ((nums (cl-utilities:split-sequence #\, (string-trim '(#\( #\)) (subseq mul 3)))))
-      (apply #'* (mapcar #'parse-integer nums))))
+    (apply #'* (mapcar #'parse-integer (cl-utilities:split-sequence #\, (string-trim '(#\( #\)) (subseq mul 3))))))
 
 (defun part-1 (data)
-  (let ((muls (ppcre:all-matches-as-strings "mul\\([0-9]{1,3},[0-9]{1,3}\\)" data)))
-    (apply #'+ (mapcar #'process-mul muls))))
+    (apply #'+ (mapcar #'process-mul (ppcre:all-matches-as-strings "mul\\([0-9]{1,3},[0-9]{1,3}\\)" data))))
 
 (defun part-2 (data)
     (loop :with muls = '()
