@@ -4,7 +4,7 @@
   :license "BSD3-Clause"
   :depends-on (:arrows
                :cl-ppcre
-               :cl-str
+               :str
                :cl-utilities)
   :components ((:module "src"
                 :components
@@ -13,6 +13,7 @@
                  (:file "day3")
                  (:file "day4")
                  (:file "day5")
+                 (:file "day6")
                  (:file "main"))))
   :description "Generate a skeleton for modern project"
   :in-order-to ((test-op (test-op "advent-of-code-2024/tests"))))
