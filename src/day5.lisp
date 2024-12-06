@@ -53,10 +53,3 @@
 
 ;; (let ((data (process-data (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day5-demo-data.txt"))))
 ;;     (part-2 data))
-
-;; (= 143 (part-1 (process-data (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day5-demo-data.txt"))))
-
-;; 1) Get update
-;; 2) Get each pair '75|47 75|61 75|53 |75|29
-
-(numberp (position nil '(T T T nil)))
