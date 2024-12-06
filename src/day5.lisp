@@ -24,13 +24,23 @@
 (defun check-key-rules (calculated-rules rules)
   (loop :for rule :in calculated-rules
         :if (member rule rules :test #'string-equal)
-        :collect t
+        :collect rule
         :else
         :collect nil))
 
 (defun middle-element (lst)
   (let ((len (length lst)))
     (nth (floor len 2) lst)))
+
+(defun reverse-rule (rule)
+  (let ((r (str:split "|" rule)))
+    (format nil "~A|~A" (cadr r) (car r))))
+
+(defun check-reverse-rule (rule rules)
+  (let ((rrule (reverse-rule rule)))
+    (if (position rrule rules :test #'string-equal)
+        rrule
+        nil)))
 
 (defun get-updates (updates rules)
   (loop :for update :in updates
@@ -40,28 +50,38 @@
         :collect update :into invalid
         :finally (return (list :valid valid :invalid invalid))))
 
+(defun reorder-invalid-update (update rules)
+  (dolist (rule rules)
+    (let* ((pairs (str:split "|" rule))
+           (first (position (car pairs) update :test #'string-equal))
+           (second (position (cadr pairs) update :test #'string-equal)))
+      (when (and first second (> first second))
+          (setf (aref update first) (cadr pairs))
+          (setf (aref update second) (car pairs)))))
+  (coerce update 'list))
+
 (defun process-valid-updates (updates rules)
   (let ((classified-updates (get-updates updates rules)))
     (mapcar #'middle-element (getf classified-updates :valid))))
 
 (defun process-invalid-updates (updates rules)
   (let ((classified-updates (get-updates updates rules)))
-    (getf classified-updates :invalid)))
+    (mapcar #'middle-element (loop :for update :in (getf classified-updates :invalid)
+          :collect (let ((current-update (coerce update 'vector))
+                         (previous-update nil))
+                     (loop
+                       :until (equal current-update previous-update)
+                       :do (progn
+                             (setf previous-update current-update)
+                             (setf current-update (reorder-invalid-update (coerce current-update 'vector) rules))))
+                     (coerce current-update 'list))))))
 
 (defun part-1 (valid-updates)
     (apply #'+ (mapcar #'parse-integer (process-valid-updates (getf valid-updates :updates) (getf valid-updates :rules)))))
 
 (defun part-2 (invalid-updates)
-    (process-invalid-updates (getf invalid-updates :updates) (getf invalid-updates :rules)))
+    (apply #'+ (mapcar #'parse-integer (process-invalid-updates (getf invalid-updates :updates) (getf invalid-updates :rules)))))
 
 (defun day5 (file)
     (let ((data (process-data (load-data file))))
-        (list (part-1 data)
-              (part-2 data))))
-
-;; Debug
-(let ((data (process-data (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day5-data.txt"))))
-    (part-1 data))
-
-;; (let ((data (process-data (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day5-demo-data.txt"))))
-;;     (part-2 data))
+        (list (part-1 data) (part-2 data))))
