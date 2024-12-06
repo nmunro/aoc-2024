@@ -55,15 +55,16 @@
   (string= "#" (aref map (cadr pos) (car pos))))
 
 (defun translate-or-rotate-pos (curr-pos next-pos map)
-  (let ((orientation (get-orientation curr-pos map))
-        (collision (collision-p next-pos map)))
-    (when collision
+  (let ((orientation (get-orientation curr-pos map)))
+    (if (collision-p next-pos map)
+      (progn
         (setf (aref map (cadr curr-pos) (car curr-pos)) (get-next-orientation orientation)) ; rotate
-        (return-from translate-or-rotate-pos curr-pos))
+        curr-pos)
 
-    (setf (aref map (cadr curr-pos) (car curr-pos)) ".")
-    (setf (aref map (cadr next-pos) (car next-pos)) orientation)
-    (list (cadr next-pos) (car next-pos)))) ; translate
+      (progn
+        (setf (aref map (cadr curr-pos) (car curr-pos)) ".")
+        (setf (aref map (cadr next-pos) (car next-pos)) orientation)
+        next-pos)))) ; translate
 
 (defun part-1 (map)
     (let ((coords (make-hash-table :test #'equal)))
