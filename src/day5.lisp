@@ -32,20 +32,32 @@
   (let ((len (length lst)))
     (nth (floor len 2) lst)))
 
-(defun process-updates (updates rules)
+(defun get-updates (updates rules)
   (loop :for update :in updates
         :if (not (numberp (position nil (check-key-rules (get-key-rules update) rules))))
-        :collect (middle-element update)))
+        :collect update :into valid
+        :else
+        :collect update :into invalid
+        :finally (return (list :valid valid :invalid invalid))))
 
-(defun part-1 (data)
-    (apply #'+ (mapcar #'parse-integer (process-updates (getf data :updates) (getf data :rules)))))
+(defun process-valid-updates (updates rules)
+  (let ((classified-updates (get-updates updates rules)))
+    (mapcar #'middle-element (getf classified-updates :valid))))
 
-(defun part-2 (data)
-    nil)
+(defun process-invalid-updates (updates rules)
+  (let ((classified-updates (get-updates updates rules)))
+    (getf classified-updates :invalid)))
+
+(defun part-1 (valid-updates)
+    (apply #'+ (mapcar #'parse-integer (process-valid-updates (getf valid-updates :updates) (getf valid-updates :rules)))))
+
+(defun part-2 (invalid-updates)
+    (process-invalid-updates (getf invalid-updates :updates) (getf invalid-updates :rules)))
 
 (defun day5 (file)
     (let ((data (process-data (load-data file))))
-        (list (part-1 data) (part-2 data))))
+        (list (part-1 data)
+              (part-2 data))))
 
 ;; Debug
 (let ((data (process-data (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day5-data.txt"))))
