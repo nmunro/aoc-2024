@@ -54,6 +54,30 @@
 (defun collision-p (pos map)
   (string= "#" (aref map (cadr pos) (car pos))))
 
+(defun share-x-axis-p (point1 point2)
+  (= (car point1) (car point2)))
+
+(defun share-y-axis-p (point1 point2)
+  (= (cadr point1) (cadr point2)))
+
+(defun in-front-of-guard (point guard orientation)
+  (cond
+    ((and (string= orientation "^"))
+     nil)
+
+    ((string= orientation ">")
+     nil)
+
+    ((string= orientation "V")
+     nil)
+
+    (string= orientation "<")
+    nil))
+
+(defun in-path-of-guard-p (point guard)
+  (or (share-x-axis-p point guard)
+      (share-y-axis-p point guard)))
+
 (defun translate-or-rotate-pos (curr-pos next-pos map)
   (let ((orientation (get-orientation curr-pos map)))
     (if (collision-p next-pos map)
@@ -80,9 +104,9 @@
                 (return-from part-1 (hash-table-count coords))))))))
 
 (defun part-2 (map)
-    nil)
+    (in-path-of-guard-p (get-pos map) '(0 6)))
 
 (defun day6 (file)
   (list (part-1 (load-data file)) (part-2 (load-data file))))
 
-(day6 #p"~/quicklisp/local-projects/aoc-2024/data/day6-data.txt")
+(day6 #p"~/quicklisp/local-projects/aoc-2024/data/day6-demo-data.txt")
