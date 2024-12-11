@@ -8,9 +8,8 @@
 (define-condition off-grid (error)
     ((message :initarg :message :accessor message)))
 
-(defun load-data (file)
-  (let ((data (uiop:read-file-lines file)))
-    (make-array (list (length data) (length (first data))) :initial-contents data)))
+(define-condition walked-too-far (error)
+    ((message :initarg :message :accessor message)))
 
 (defun get-pos (map)
   (loop :for y :from 0 :below (array-dimension map 1)
@@ -75,91 +74,46 @@
                     :do (push (list y x) spaces)))
     spaces))
 
-(defun altered-maps (map)
-  "Returns a generator that modifies each blank space in the map and reverts the change after processing."
-  (let ((spaces (blank-spaces map)))
-    (lambda ()
-      (when spaces
-        (let* ((point (pop spaces))
-               (copy (make-array (array-dimensions map)
-                                 :initial-contents (map 'list #'copy-seq map))))
-          ;; Modify the map copy at the blank space
-          (setf (aref copy (car point) (cadr point)) "#")
-          copy))))) ; Return the modified map
-
-(defun altered-maps (map)
-  "Returns a generator that modifies each blank space in the map and reverts the change after processing."
-  (let ((spaces (blank-spaces map)))
-    (lambda ()
-      (when spaces
-        (let* ((point (pop spaces))
-               (copy (cl-utilities:copy-array map))          ; Make a copy of the map
-               (revert-fn (alter-map copy point "#"))) ; Modify the copy
-          (funcall revert-fn) ; Restore the original map after use
-          copy))))) ; Return the modified copy
-
-(defun part-1 (map)
-  "Counts the number of unique nodes visited in the original map."
+(defun traverse-map (map step-limit)
   (let ((visited (make-hash-table :test #'equal))
-        (pos (get-pos map)))
+        (pos (get-pos map))
+        (steps-taken 0))
     (loop
       (handler-case
           (progn
+            (when (= step-limit steps-taken)
+              (error 'walked-too-far :message "Walked in a loop"))
+
             (setf (gethash pos visited) t) ; Mark current position as visited
             (let* ((orientation (get-orientation pos map))
                    (next-pos (get-next-pos pos orientation)))
-              (setf pos (translate-or-rotate-pos pos next-pos map)))) ; Move to the next position
+              (setf pos (translate-or-rotate-pos pos next-pos map))
+              (incf steps-taken))) ; Move to the next position
+
+        (walked-too-far (e)
+          (declare (ignore e))
+          (return-from traverse-map (values 1 (hash-table-count visited))))
 
         (off-grid (e) ; Exit when the character goes off the grid
           (declare (ignore e))
-          (return-from part-1 (hash-table-count visited)))
+          (return-from traverse-map (values 0 (hash-table-count visited))))
 
         (sb-int:invalid-array-index-error (e) ; Handle out-of-bounds errors
           (declare (ignore e))
-          (return-from part-1 (hash-table-count visited)))))))
+          (return-from traverse-map (values 0 (hash-table-count visited))))))))
 
-(defun check-loop (map)
-  "Returns T if the character takes more than 10,000 steps without going off-grid; NIL otherwise."
-  (let ((step-count 0)
-        (pos (get-pos map)))
-    (loop
-      (handler-case
-          (progn
-            (let* ((orientation (get-orientation pos map))
-                   (next-pos (get-next-pos pos orientation)))
-              (setf pos (translate-or-rotate-pos pos next-pos map)))
-            (incf step-count)
-            (when (> step-count 10000)
-              (return-from check-loop t))) ; Return T if step count exceeds 10,000
-
-        (off-grid (e) ; Exit if the character goes off the grid
-          (declare (ignore e))
-          (return-from check-loop nil))
-
-        (sb-int:invalid-array-index-error (e) ; Handle out-of-bounds errors
-          (declare (ignore e))
-          (return-from check-loop nil))))))
+(defun part-1 (map)
+  "Counts the number of unique nodes visited in the original map."
+  (multiple-value-bind (loops unique-nodes)
+      (traverse-map map 10000)
+    unique-nodes))
 
 (defun part-2 (map)
-  "Counts how many altered maps cause the character to take more than 10,000 steps (loop)."
-  (let ((generator (altered-maps map))
-        (loop-count 0)
-        (map-count 0)
-        (map-total (length (blank-spaces map))))
-    (loop
-      (let ((altered-map (funcall generator)))
-        (when altered-map
-          (incf map-count)
-          (format t "Processing map ~A/~A~%" map-count map-total)
-          (when (check-loop altered-map)
-            (incf loop-count)))
-        (unless altered-map
-          (return loop-count))))))
-
-(defun day6 (file)
-  "Processes the input file for both parts."
-  (let ((map (load-map file)))
-    (list (part-1 map) (part-2 map))))
+  nil)
 
 (defun day6 (file)
   (list (part-1 (load-map file)) (part-2 (load-map file))))
+
+(= 41 (part-1 (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day6-demo-data.txt")))
+;; (= 6 (part-2 (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day6-demo-data.txt")))
+
