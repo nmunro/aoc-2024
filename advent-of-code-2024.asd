@@ -9,7 +9,8 @@
                :cl-utilities)
   :components ((:module "src"
                 :components
-                ((:file "day1")
+                ((:file "utils")
+                 (:file "day1")
                  (:file "day2")
                  (:file "day3")
                  (:file "day4")

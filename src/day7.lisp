@@ -60,6 +60,4 @@
     (sum-totals (loop :for pd :in (process-data data '(+ * ||)) :collect (car pd))))
 
 (defun day7 (file)
-  (format t "~A~% "(list (part-1 (load-data file)) (part-2 (load-data file)))))
-
-(day7 #p"~/quicklisp/local-projects/aoc-2024/data/day7-data.txt")
+    (list (part-1 (load-data file)) (part-2 (load-data file))))
