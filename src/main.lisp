@@ -7,6 +7,7 @@
   (:import-from :advent-of-code-2024/day5 #:day5)
   (:import-from :advent-of-code-2024/day6 #:day6)
   (:import-from :advent-of-code-2024/day7 #:day7)
+  (:import-from :advent-of-code-2024/day8 #:day8)
   (:export #:main))
 
 (in-package advent-of-code-2024)
@@ -32,4 +33,9 @@
     (format t "~tDay 6, Part 1: ~A, Part 2: ~A~%" (car results) (cadr results)))
 
   (let ((results (day7 #p"~/quicklisp/local-projects/aoc-2024/data/day7-data.txt")))
-    (format t "~tDay 7, Part 1: ~A, Part 2: ~A~%" (car results) (cadr results))))
+    (format t "~tDay 7, Part 1: ~A, Part 2: ~A~%" (car results) (cadr results)))
+
+  (let ((results (day8 #p"~/quicklisp/local-projects/aoc-2024/data/day8-data.txt")))
+    (format t "~tDay 8, Part 1: ~A, Part 2: ~A~%" (car results) (cadr results))))
+
+(main)
