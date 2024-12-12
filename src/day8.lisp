@@ -72,17 +72,18 @@
 (defun get-pairs (hm)
     (loop :for k :being :the :hash-keys :of hm :collect (antenna-pairs (gethash k hm))))
 
+(defun plot-next-antinodes (antenna diff map)
+    (if (not (valid-position-p antenna map))
+        nil
+        (cons antenna (plot-next-antinodes (antenna+ antenna diff) diff map))))
+
 (defun map-pair-to-antinodes (pair map)
-  (flet ((plot-next-antinodes (antenna diff map)
-            (if (not (valid-position-p antenna map))
-                nil
-                (cons antenna (plot-next-antinodes (antenna+ antenna diff) diff map)))))
     (let ((d1 (antenna- (car pair) (cadr pair)))
           (d2 (antenna- (cadr pair) (car pair))))
       (remove-if (lambda (antinode) (member antinode pair :test #'antenna=))
                  (apply #'append (list
                                   (plot-next-antinodes (car pair) d1 map)
-                                  (plot-next-antinodes (cadr pair) d2 map)))))))
+                                  (plot-next-antinodes (cadr pair) d2 map))))))
 
 (defun part-1 (map)
   (let ((pairs (apply #'append (get-pairs (create-hash map)))))
@@ -91,7 +92,6 @@
                     (remove nil (mapcar #'valid-pos-p (apply #'append (mapcar #'get-antinode-pairs pairs))))
                     :test #'antenna=)))))
 
-;; @TODO: Need to add antenna that are NOT already in the list of antinodes
 (defun part-2 (map)
   (flet ((map-pair (pair) (map-pair-to-antinodes pair map)))
     (let* ((antinodes (remove-duplicates (flatten* (mapcar #'map-pair (apply #'append (get-pairs (create-hash map)))) 1000) :test #'antenna=))
