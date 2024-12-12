@@ -1,6 +1,6 @@
 (defpackage advent-of-code-2024/day8
   (:use :cl)
-  (:import-from :advent-of-code-2024/utils #:load-map)
+  (:import-from :advent-of-code-2024/utils #:load-map #:off-grid)
   (:export #:day8))
 
 (in-package advent-of-code-2024/day8)
@@ -9,6 +9,24 @@
   freq
   (row 0 :type integer)
   (col 0 :type integer))
+
+(defun flatten* (lst depth &aux (re '()))
+  (cond
+    ((null lst) '())
+    ((listp (car lst))
+     (append (cond
+               ((= 0 depth)             ; flatten none
+                (list (car lst)))
+               ((< 0 depth)             ; flatten down
+                (flatten* (car lst) (- depth 1)))
+               ((= -1 depth)            ; flatten all
+                (flatten* (car lst) depth))
+               ((< depth -1)            ; flatten up
+                (list (flatten* (car lst) (+ depth 1)))))
+             (append (flatten* (cdr lst) depth)
+                     re)))
+    (t (cons (car lst)
+             (append (flatten* (cdr lst) depth) re)))))
 
 (defun antenna-diff (a1 a2)
   (let ((row (- (antenna-row a1) (antenna-row a2)))
@@ -23,7 +41,7 @@
 (defun antenna- (a1 diff)
   (make-antenna :freq (antenna-freq a1)
                 :row (- (antenna-row a1) (antenna-row diff))
-                :col (- (antenna-row a1) (antenna-col diff))))
+                :col (- (antenna-col a1) (antenna-col diff))))
 
 (defun antenna= (a1 a2)
   (and (= (antenna-row a1) (antenna-row a2))
@@ -32,6 +50,15 @@
 (defun get-antinode-pairs (antenna-pairs)
   (list (antenna- (cadr antenna-pairs) (apply #'antenna-diff antenna-pairs))
         (antenna+ (car antenna-pairs) (apply #'antenna-diff antenna-pairs))))
+
+(defun get-antinode-pairs-recur (antenna-pairs map)
+  ;; Must be recursive
+  (if (and (valid-position-p (car antenna-pairs) map)
+           (valid-position-p (cadr antenna-pairs) map))
+    (let ((initial-antinodes (get-antinode-pairs antenna-pairs)))
+        (list (get-antinode-pairs-recur (list (car antenna-pairs) (car initial-antinodes)) map)
+              (get-antinode-pairs-recur (list (cadr antenna-pairs) (cadr initial-antinodes)) map)))
+    antenna-pairs))
 
 (defun valid-position-p (antenna map)
     (when (and (>= (antenna-row antenna) 0)
@@ -58,22 +85,26 @@
                      :collect (list (nth i antennas) (nth j antennas)))))
 
 (defun get-pairs (hm)
-    (loop :for k :being :the :hash-keys :of hm
-          :for v :being :the :hash-value :of hm
-          :collect (antenna-pairs v)))
+    (loop :for k :being :the :hash-keys :of hm :collect (antenna-pairs (gethash k hm))))
 
 (defun part-1 (map)
-  (let* ((hm (create-hash map))
-         (pairs (apply #'append (get-pairs hm))))
-
+  (let ((pairs (apply #'append (get-pairs (create-hash map)))))
     (flet ((valid-pos-p (node) (valid-position-p node map)))
         (length (remove-duplicates
                     (remove nil (mapcar #'valid-pos-p (apply #'append (mapcar #'get-antinode-pairs pairs))))
                     :test #'antenna=)))))
 
 (defun part-2 (map)
-  nil)
+  (let ((pairs (apply #'append (get-pairs (create-hash map)))))
+    (flet ((valid-pos-p (node) (valid-position-p node map))
+           (recur-pairs (pair) (get-antinode-pairs-recur pair map)))
+        (length (remove-duplicates (remove nil (mapcar #'valid-pos-p (flatten* (mapcar #'recur-pairs pairs) 1000))))))))
 
 (defun day8 (path)
   (let ((map (load-map path)))
     (list (part-1 map) (part-2 map))))
+
+(= 285 (part-1 (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day8-data.txt")))
+(= 34 (part-2 (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day8-demo-data.txt")))
+
+(part-2 (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day8-demo-data.txt"))

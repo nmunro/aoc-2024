@@ -1,12 +1,9 @@
 (defpackage advent-of-code-2024/day6
   (:use :cl)
-  (:import-from :advent-of-code-2024/utils #:load-map)
+  (:import-from :advent-of-code-2024/utils #:load-map #:off-grid)
   (:export #:day6))
 
 (in-package advent-of-code-2024/day6)
-
-(define-condition off-grid (error)
-    ((message :initarg :message :accessor message)))
 
 (define-condition walked-too-far (error)
     ((message :initarg :message :accessor message)))
