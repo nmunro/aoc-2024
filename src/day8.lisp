@@ -12,21 +12,15 @@
 
 (defun flatten* (lst depth &aux (re '()))
   (cond
-    ((null lst) '())
+    ((null lst) '())  ;; If list is empty, return empty list
     ((listp (car lst))
      (append (cond
-               ((= 0 depth)             ; flatten none
-                (list (car lst)))
-               ((< 0 depth)             ; flatten down
-                (flatten* (car lst) (- depth 1)))
-               ((= -1 depth)            ; flatten all
-                (flatten* (car lst) depth))
-               ((< depth -1)            ; flatten up
-                (list (flatten* (car lst) (+ depth 1)))))
-             (append (flatten* (cdr lst) depth)
-                     re)))
-    (t (cons (car lst)
-             (append (flatten* (cdr lst) depth) re)))))
+               ((= 0 depth) (list (car lst)))  ;; Don't flatten
+               ((< 0 depth) (flatten* (car lst) (- depth 1)))  ;; Flatten down
+               ((= -1 depth) (flatten* (car lst) depth))  ;; Flatten all
+               ((< depth -1) (list (flatten* (car lst) (+ depth 1)))))  ;; Flatten up
+             (flatten* (cdr lst) depth)))
+    (t (cons (car lst) (flatten* (cdr lst) depth)))))
 
 (defun antenna-diff (a1 a2)
   (let ((row (- (antenna-row a1) (antenna-row a2)))
@@ -50,15 +44,6 @@
 (defun get-antinode-pairs (antenna-pairs)
   (list (antenna- (cadr antenna-pairs) (apply #'antenna-diff antenna-pairs))
         (antenna+ (car antenna-pairs) (apply #'antenna-diff antenna-pairs))))
-
-(defun get-antinode-pairs-recur (antenna-pairs map)
-  ;; Must be recursive
-  (if (and (valid-position-p (car antenna-pairs) map)
-           (valid-position-p (cadr antenna-pairs) map))
-    (let ((initial-antinodes (get-antinode-pairs antenna-pairs)))
-        (list (get-antinode-pairs-recur (list (car antenna-pairs) (car initial-antinodes)) map)
-              (get-antinode-pairs-recur (list (cadr antenna-pairs) (cadr initial-antinodes)) map)))
-    antenna-pairs))
 
 (defun valid-position-p (antenna map)
     (when (and (>= (antenna-row antenna) 0)
@@ -87,6 +72,18 @@
 (defun get-pairs (hm)
     (loop :for k :being :the :hash-keys :of hm :collect (antenna-pairs (gethash k hm))))
 
+(defun map-pair-to-antinodes (pair map)
+  (flet ((plot-next-antinodes (antenna diff map)
+            (if (not (valid-position-p antenna map))
+                nil
+                (cons antenna (plot-next-antinodes (antenna+ antenna diff) diff map)))))
+    (let ((d1 (antenna- (car pair) (cadr pair)))
+          (d2 (antenna- (cadr pair) (car pair))))
+      (remove-if (lambda (antinode) (member antinode pair :test #'antenna=))
+                 (apply #'append (list
+                                  (plot-next-antinodes (car pair) d1 map)
+                                  (plot-next-antinodes (cadr pair) d2 map)))))))
+
 (defun part-1 (map)
   (let ((pairs (apply #'append (get-pairs (create-hash map)))))
     (flet ((valid-pos-p (node) (valid-position-p node map)))
@@ -94,17 +91,13 @@
                     (remove nil (mapcar #'valid-pos-p (apply #'append (mapcar #'get-antinode-pairs pairs))))
                     :test #'antenna=)))))
 
+;; @TODO: Need to add antenna that are NOT already in the list of antinodes
 (defun part-2 (map)
-  (let ((pairs (apply #'append (get-pairs (create-hash map)))))
-    (flet ((valid-pos-p (node) (valid-position-p node map))
-           (recur-pairs (pair) (get-antinode-pairs-recur pair map)))
-        (length (remove-duplicates (remove nil (mapcar #'valid-pos-p (flatten* (mapcar #'recur-pairs pairs) 1000))))))))
+  (flet ((map-pair (pair) (map-pair-to-antinodes pair map)))
+    (let* ((antinodes (remove-duplicates (flatten* (mapcar #'map-pair (apply #'append (get-pairs (create-hash map)))) 1000) :test #'antenna=))
+           (left-over-antenna (loop :for antenna :in (find-antenna map) :unless (member antenna antinodes :test #'antenna=) :collect antenna)))
+        (+ (length left-over-antenna) (length antinodes)))))
 
 (defun day8 (path)
   (let ((map (load-map path)))
     (list (part-1 map) (part-2 map))))
-
-(= 285 (part-1 (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day8-data.txt")))
-(= 34 (part-2 (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day8-demo-data.txt")))
-
-(part-2 (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day8-demo-data.txt"))
