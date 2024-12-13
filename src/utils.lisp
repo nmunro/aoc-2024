@@ -35,3 +35,15 @@
     (setf (aref new-str p1) (aref seq p2))
     (setf (aref new-str p2) (aref seq p1))
     new-str))
+
+(defun flatten* (lst depth)
+  (cond
+    ((null lst) '())  ;; If list is empty, return empty list
+    ((listp (car lst))
+     (append (cond
+               ((= 0 depth) (list (car lst)))  ;; Don't flatten
+               ((< 0 depth) (flatten* (car lst) (- depth 1)))  ;; Flatten down
+               ((= -1 depth) (flatten* (car lst) depth))  ;; Flatten all
+               ((< depth -1) (list (flatten* (car lst) (+ depth 1)))))  ;; Flatten up
+             (flatten* (cdr lst) depth)))
+    (t (cons (car lst) (flatten* (cdr lst) depth)))))

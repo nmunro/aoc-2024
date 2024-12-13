@@ -1,6 +1,6 @@
 (defpackage advent-of-code-2024/day8
   (:use :cl)
-  (:import-from :advent-of-code-2024/utils #:load-map #:off-grid)
+  (:import-from :advent-of-code-2024/utils #:load-map #:off-grid #:flatten*)
   (:export #:day8))
 
 (in-package advent-of-code-2024/day8)
@@ -9,18 +9,6 @@
   freq
   (row 0 :type integer)
   (col 0 :type integer))
-
-(defun flatten* (lst depth &aux (re '()))
-  (cond
-    ((null lst) '())  ;; If list is empty, return empty list
-    ((listp (car lst))
-     (append (cond
-               ((= 0 depth) (list (car lst)))  ;; Don't flatten
-               ((< 0 depth) (flatten* (car lst) (- depth 1)))  ;; Flatten down
-               ((= -1 depth) (flatten* (car lst) depth))  ;; Flatten all
-               ((< depth -1) (list (flatten* (car lst) (+ depth 1)))))  ;; Flatten up
-             (flatten* (cdr lst) depth)))
-    (t (cons (car lst) (flatten* (cdr lst) depth)))))
 
 (defun antenna-diff (a1 a2)
   (let ((row (- (antenna-row a1) (antenna-row a2)))
