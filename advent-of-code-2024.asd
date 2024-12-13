@@ -19,6 +19,7 @@
                  (:file "day7")
                  (:file "day8")
                  (:file "day9")
+                 (:file "day10")
                  (:file "main"))))
   :description "Generate a skeleton for modern project"
   :in-order-to ((test-op (test-op "advent-of-code-2024/tests"))))
