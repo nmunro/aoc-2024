@@ -44,9 +44,20 @@
           (swap-elements diskmap x (find-last-file-block diskmap)))))
     diskmap))
 
+(defun swap-file-blocks (diskmap file-block)
+  (loop :with free-space-blocks := (find-x-free-blocks diskmap (size file-block))
+        :for index :from (file-block-start file-block) :to (file-block-end file-block)
+        :for free-space-block := (first free-space-blocks)
+        :while (and free-space-block (< free-space-block index))  ; Only move left
+        :do (progn
+              (swap-elements diskmap index free-space-block)
+              (setf free-space-blocks (rest free-space-blocks)))))
+
 (defun defrag-2 (diskmap)
   ; Store files that have been attemped to defragged, successfully or not
   (let ((defragged-files '()))
+    (loop :for file-block :across (map-file-blocks diskmap)
+          :do (swap-file-blocks diskmap file-block))
     diskmap))
 
 (defun calculate-checksum (diskmap)
@@ -61,7 +72,7 @@
   end)
 
 (defmethod size ((file-block file-block))
-  (- (file-block-end file-block) (file-block-start file-block)))
+  (1+ (- (file-block-end file-block) (file-block-start file-block))))
 
 (defun blocks-to-file-block (blocks)
   (let ((first-block (car blocks)))
@@ -101,7 +112,7 @@
           :finally (when current-block
                      (push (blocks-to-file-block (reverse current-block)) res)))
     ;; Return results as a vector
-    (coerce (reverse res) 'vector)))
+    (coerce res 'vector)))
 
 (defun find-x-free-blocks (diskmap num-of-blocks)
   (let ((current-count 0)
@@ -114,7 +125,7 @@
                    (setf start-index index))
                  (incf current-count)
                  (when (= current-count num-of-blocks)
-                  (return (list start-index (+ start-index num-of-blocks -1)))))
+                  (return (loop :for x :from start-index :to (+ start-index num-of-blocks -1) :collect x))))
 
                 (t
                  (progn
@@ -128,15 +139,9 @@
 
 (defun part-2 (diskmap)
   (let ((copied-diskmap (copy-seq diskmap)))
-    (loop :for file-block :across (map-file-blocks copied-diskmap)
-          :collect file-block)))
+    (defrag-2 copied-diskmap)
+    (calculate-checksum copied-diskmap)))
 
 (defun day9 (path)
   (let ((data (load-data path)))
     (list (part-1 data) (part-2 data))))
-
-(let ((diskmap (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day9-demo-data.txt")))
-  (part-2 diskmap))
-
-(let ((diskmap (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day9-demo-data.txt")))
-  (= 1928 (part-1 diskmap)))
