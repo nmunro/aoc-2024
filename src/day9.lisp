@@ -45,29 +45,98 @@
     diskmap))
 
 (defun defrag-2 (diskmap)
-  nil)
+  ; Store files that have been attemped to defragged, successfully or not
+  (let ((defragged-files '()))
+    diskmap))
 
-(defun calculate-checksum-1 (diskmap)
-  (let ((data (subseq diskmap 0 (position "." diskmap :test #'equal))))
-    (loop :for num :across data
-          :for count :from 0 :to (1- (length data))
-          :sum (* num count))))
+(defun calculate-checksum (diskmap)
+  (loop :for num :across diskmap
+        :for count :from 0 :to (1- (length diskmap))
+        :if (numberp num)
+        :sum (* num count)))
 
-(defun calculate-checksum-2 (diskmap)
-  nil)
+(defstruct file-block
+  file-id
+  start
+  end)
+
+(defmethod size ((file-block file-block))
+  (- (file-block-end file-block) (file-block-start file-block)))
+
+(defun blocks-to-file-block (blocks)
+  (let ((first-block (car blocks)))
+    (make-file-block :file-id (getf first-block :file-id)
+                     :start (getf first-block :start)
+                     :end (+ (1- (length blocks)) (getf first-block :start)))))
+
+(defun map-file-blocks (diskmap)
+  (let ((res '())
+        (current-block '())
+        (file-id nil))
+    (loop :for block :across diskmap
+          :for index :from 0
+          :do (cond
+                ;; Encountering a new file ID, flush current block
+                ((and (numberp block)
+                      (or (null current-block)  ; No current block
+                          (/= file-id block))) ; Different file ID
+                 ;; Flush the current block if it exists
+                 (when current-block
+                   (push (blocks-to-file-block (reverse current-block)) res))
+                 ;; Start a new block for the new file ID
+                 (setf current-block (list (list :start index :file-id block))
+                       file-id block))
+
+                ;; Continuing the same file ID
+                ((and (numberp block) (= file-id block))
+                 (push (list :start index :file-id file-id) current-block))
+
+                ;; Encountering a ".", flush the current block
+                ((and (stringp block) (string= block "."))
+                 (when current-block
+                   (push (blocks-to-file-block (reverse current-block)) res))
+                 ;; Reset current block and file-id
+                 (setf current-block '() file-id nil)))
+          ;; Finally, handle the last block if any
+          :finally (when current-block
+                     (push (blocks-to-file-block (reverse current-block)) res)))
+    ;; Return results as a vector
+    (coerce (reverse res) 'vector)))
+
+(defun find-x-free-blocks (diskmap num-of-blocks)
+  (let ((current-count 0)
+        (start-index nil))
+    (loop :for elem :across diskmap
+          :for index :from 0
+          :do (cond
+                ((and (stringp elem) (string= elem "."))
+                 (when (null start-index)
+                   (setf start-index index))
+                 (incf current-count)
+                 (when (= current-count num-of-blocks)
+                  (return (list start-index (+ start-index num-of-blocks -1)))))
+
+                (t
+                 (progn
+                  (setf current-count 0)
+                  (setf start-index nil)))))))
 
 (defun part-1 (diskmap)
   (let ((copied-diskmap (copy-seq diskmap)))
     (defrag-1 copied-diskmap)
-    (calculate-checksum-1 copied-diskmap)))
+    (calculate-checksum copied-diskmap)))
 
 (defun part-2 (diskmap)
   (let ((copied-diskmap (copy-seq diskmap)))
-    copied-diskmap))
+    (loop :for file-block :across (map-file-blocks copied-diskmap)
+          :collect file-block)))
 
 (defun day9 (path)
   (let ((data (load-data path)))
     (list (part-1 data) (part-2 data))))
 
-(let ((data (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day9-demo-data.txt")))
-  (part-1 data))
+(let ((diskmap (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day9-demo-data.txt")))
+  (part-2 diskmap))
+
+(let ((diskmap (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day9-demo-data.txt")))
+  (= 1928 (part-1 diskmap)))
