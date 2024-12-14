@@ -1,6 +1,6 @@
 (defpackage advent-of-code-2024/day10
   (:use :cl)
-  (:import-from :advent-of-code-2024/utils #:load-map)
+  (:import-from :advent-of-code-2024/utils #:load-map #:flatten*)
   (:export #:day10))
 
 (in-package advent-of-code-2024/day10)
@@ -15,39 +15,42 @@
 ; and the next position is of a higher value than the point
 ; points need to only be N, S, E, W, only, no diagonals
 (defun is-valid-vector-p (map point start)
-  (handler-case
-    (let ((point-value (digit-char-p (aref map (getf point :col) (getf point :row)))))
-      (and (>= (getf point :row) 0)
-           (>= (getf point :col) 0)
-           (< (getf point :row) (array-dimension map 1))
-           (< (getf point :col) (array-dimension map 0))
-           (= (1+ start) point-value)))
-    (sb-int:invalid-array-index-error (e)
-      (declare (ignore e))
-      (return-from is-valid-vector-p nil))))
+  "Check if the given point is within bounds and its value is start + 1."
+  (let ((row (getf point :row))
+        (col (getf point :col)))
+    (and (>= row 0)
+         (>= col 0)
+         (< row (array-dimension map 0))  ;; Rows must be within bounds
+         (< col (array-dimension map 1))  ;; Columns must be within bounds
+         (let ((point-value (digit-char-p (aref map row col)))) ;; Correct indexing
+           (and point-value (= (1+ start) point-value))))))
 
 (defun directions (point)
-  (let ((north (list :col (1- (getf point :row)) :row (getf point :col)))
-        (east (list :col (getf point :row) :row (1+ (getf point :col))))
-        (south (list :col (1+ (getf point :row)) :row (getf point :col)))
-        (west (list :col (getf point :row) :row (1- (getf point :col)))))
+  (let ((north (list :row (1- (getf point :row)) :col (getf point :col)))
+        (east  (list :row (getf point :row)      :col (1+ (getf point :col))))
+        (south (list :row (1+ (getf point :row)) :col (getf point :col)))
+        (west  (list :row (getf point :row) :col (1- (getf point :col)))))
     (list north east south west)))
 
 (defun plot-next-vector (map point)
   (let* ((start (digit-char-p (aref map (getf point :row) (getf point :col)))))
     ;; Return list of VALID vectors
-    (list start start (remove-if (lambda (point) (not (is-valid-vector-p map point start))) (directions point)))))
+    (remove-if (lambda (point) (not (is-valid-vector-p map point start))) (directions point))))
 
 ; @TODO: Write this so that if there's different ways to go
 ; It can recursively start from the divergent paths
 ; and join them to the original list at the point
 ; of divergence
-(defun map-trail (map start)
-  (format t "Start: ~A, next vectors: ~A~%" start (plot-next-vector map start)))
+(defun map-trail (map point &key (count 0))
+  ; base case
+  (if (= 9 count)
+    point
+    (loop :for next-point :in (plot-next-vector map point)
+          :collect (cons point (map-trail map next-point :count (1+ count))))))
 
 (defun part-1 (map)
-  (dolist (trailhead (find-trailheads map))
-    (map-trail trailhead)))
+  (let ((trails (loop :for trailhead :in (find-trailheads map) :collect (map-trail map trailhead))))
+    trails))
 
 (defun part-2 (data)
     nil)
