@@ -51,3 +51,6 @@
 
 (let ((stones (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day11-data.txt")))
   (format t "Part 1: ~A~%" (length (part-1 stones))))
+
+(let ((stones (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day11-data.txt")))
+  (format t "Part 2: ~A~%" (length (part-2 stones))))
