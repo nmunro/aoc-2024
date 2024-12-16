@@ -37,6 +37,19 @@
     ;; Return list of VALID vectors
     (remove-if (lambda (point) (not (is-valid-vector-p map point start))) (directions point))))
 
+(defun map-trail (map point &key (points '()) (count 0))
+  (cond
+    ; base case
+    ((and (= 9 count) (= 9 (digit-char-p (aref map (getf point :row) (getf point :col)))))
+        (cons point points))
+
+    ; Couldn't complete path
+    ((= 9 count)
+        nil)
+
+    (t
+        (remove nil (loop :for next-point :in (plot-next-vector map point) :collect (map-trail map next-point :points (cons point points) :count (1+ count)))))))
+
 (defun follow-trail (map point &key (count 0))
   (cond
     ; base case
@@ -54,9 +67,13 @@
   (let ((trails (loop :for trailhead :in (find-trailheads map) :collect (remove-duplicates (flatten* (follow-trail map trailhead) 8) :test #'equal))))
     (apply #'+ (mapcar (lambda (trail) (length trail)) trails))))
 
-(defun part-2 (data)
-    nil)
+(defun part-2 (map)
+    (let ((trails (loop :for trailhead :in (find-trailheads map) :collect (remove-duplicates (flatten* (map-trail map trailhead) 8) :test #'equal))))
+        (apply #'+ (mapcar (lambda (trail) (length trail)) trails))))
 
 (defun day10 (path)
     (let ((map (load-map path)))
       (list (part-1 map) (part-2 map))))
+
+(let ((map (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day10-data.txt")) )
+  (format t "Part 2: ~A~%" (part-2 map)))
