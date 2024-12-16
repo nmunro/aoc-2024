@@ -43,7 +43,7 @@
   (let ((results (day9 #p"~/quicklisp/local-projects/aoc-2024/data/day9-data.txt")))
     (format t "~tDay 9, Part 1: ~A, Part 2: ~A~%" (car results) (cadr results)))
 
-  (let ((results (day10 #p"~/quicklisp/local-projects/aoc-2024/data/day10-demo-data.txt")))
+  (let ((results (day10 #p"~/quicklisp/local-projects/aoc-2024/data/day10-data.txt")))
     (format t "~tDay 10, Part 1: ~A, Part 2: ~A~%" (car results) (cadr results))))
 
 (main)
