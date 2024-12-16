@@ -74,6 +74,3 @@
 (defun day10 (path)
     (let ((map (load-map path)))
       (list (part-1 map) (part-2 map))))
-
-(let ((map (load-map #p"~/quicklisp/local-projects/aoc-2024/data/day10-data.txt")) )
-  (format t "Part 2: ~A~%" (part-2 map)))
