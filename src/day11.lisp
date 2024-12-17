@@ -39,18 +39,12 @@
 
 (defun part-1 (stones)
   (let ((stones (copy-list stones)))
-    (blink stones :max 25)))
+    (length (blink stones :max 25))))
 
 (defun part-2 (stones)
   (let ((stones (copy-list stones)))
-    (blink stones :max 75)))
+    (length (blink stones :max 25))))
 
 (defun day11 (path)
     (let ((stones (load-data path)))
       (list (part-1 stones) (part-2 stones))))
-
-(let ((stones (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day11-data.txt")))
-  (format t "Part 1: ~A~%" (length (part-1 stones))))
-
-(let ((stones (load-data #p"~/quicklisp/local-projects/aoc-2024/data/day11-data.txt")))
-  (format t "Part 2: ~A~%" (length (part-2 stones))))
