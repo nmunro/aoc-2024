@@ -7,6 +7,18 @@
 (defun load-data (path)
   (mapcar #'parse-integer (str:split " " (uiop:read-file-line path))))
 
+(defun memoize (fn db)
+  (sqlite:execute-non-query db
+    "CREATE TABLE IF NOT EXISTS cache (id INTEGER PRIMARY KEY, key TEXT NOT NULL, value TEXT NOT NULL)")
+  (lambda (key)
+    (let ((res (sqlite:execute-single db "SELECT value FROM cache WHERE key = ?" key)))
+      (if res
+          (read-from-string res) ;; Deserialize value
+          (let ((value (funcall fn key)))
+            (sqlite:execute-non-query db "INSERT INTO cache (key, value) VALUES (?, ?)"
+                                      key (write-to-string value)) ;; Serialize value
+            value)))))
+
 (defun process-stone (stone)
   (flet ((split-stone (stone)
            (let* ((stone-num (write-to-string stone))
@@ -22,29 +34,42 @@
       (t
        (* stone 2024)))))
 
-(defun process-stones (stones)
-  (loop :for stone :in stones
-        :for processed-stone = (process-stone stone)
-        :if (listp processed-stone)
-          :collect (car processed-stone)
-          :and
-          :collect (cadr processed-stone)
-        :else
-          :collect processed-stone))
+(defun process-stones-in-place (stones memo)
+  "Processes stones in place, updating the list without creating a new one."
+  (let ((new-stones (list)))
+    (dolist (stone stones)
+      (let ((processed-stone (funcall memo stone)))
+        (if (listp processed-stone)
+            (setf new-stones (nconc new-stones processed-stone))
+            (push processed-stone new-stones))))
+    (nreverse new-stones))) ;; Return the modified list
 
-(defun blink (stones &key (count 0) (max 0))
-  (if (= count max)
-      stones
-      (blink (process-stones stones) :count (1+ count) :max max)))
+(defun blink (stones max memo)
+  (loop :with current-stones := stones
+        :for x :from 0 :to (1- max)
+        :do (setf current-stones (process-stones-in-place current-stones memo))
+        :finally (return current-stones)))
 
-(defun part-1 (stones)
+(defun part-1 (stones memo)
   (let ((stones (copy-list stones)))
-    (length (blink stones :max 25))))
+    (length (blink stones 25 memo))))
 
-(defun part-2 (stones)
+(defun part-2 (stones memo)
   (let ((stones (copy-list stones)))
-    (length (blink stones :max 25))))
+    (length (blink stones 75 memo))))
 
 (defun day11 (path)
-    (let ((stones (load-data path)))
-      (list (part-1 stones) (part-2 stones))))
+  (let* ((stones (load-data path))
+         (db (sqlite:connect ":memory:"))
+         (memo (memoize #'process-stone db)))
+    (unwind-protect
+         (list (part-1 stones memo)
+               (part-2 stones memo))
+      (sqlite:disconnect db))))
+
+;; (let* ((db (sqlite:connect ":memory:"))
+;;        (memo (memoize #'process-stone db)))
+;;   (let ((res (funcall memo 99)))
+;;     (format t "~A~%" (sqlite:execute-to-list db "SELECT * FROM cache"))
+;;     (sqlite:disconnect db)
+;;     res))
