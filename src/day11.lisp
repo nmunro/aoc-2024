@@ -7,17 +7,8 @@
 (defun load-data (path)
   (mapcar #'parse-integer (str:split " " (uiop:read-file-line path))))
 
-(defun memoize (fn db)
-  (sqlite:execute-non-query db
-    "CREATE TABLE IF NOT EXISTS cache (id INTEGER PRIMARY KEY, key TEXT NOT NULL, value TEXT NOT NULL)")
-  (lambda (key)
-    (let ((res (sqlite:execute-single db "SELECT value FROM cache WHERE key = ?" key)))
-      (if res
-          (read-from-string res) ;; Deserialize value
-          (let ((value (funcall fn key)))
-            (sqlite:execute-non-query db "INSERT INTO cache (key, value) VALUES (?, ?)"
-                                      key (write-to-string value)) ;; Serialize value
-            value)))))
+(defun even-digit-p (number)
+  (evenp (floor (1+ (log number 10)))))
 
 (defun process-stone (stone)
   (flet ((split-stone (stone)
@@ -28,7 +19,7 @@
       ((= 0 stone)
        1)
 
-      ((evenp (length (write-to-string stone)))
+      ((even-digit-p stone)
        (split-stone stone))
 
       (t
