@@ -7,6 +7,9 @@
 (defun load-data (path)
   (mapcar #'parse-integer (str:split " " (uiop:read-file-line path))))
 
+(defun even-digit-p (number)
+  (evenp (floor (1+ (log number 10)))))
+
 (defun process-stone (stone)
   (flet ((split-stone (stone)
            (let* ((stone-num (write-to-string stone))
@@ -16,7 +19,7 @@
       ((= 0 stone)
        1)
 
-      ((evenp (length (write-to-string stone)))
+      ((even-digit-p stone)
        (split-stone stone))
 
       (t
