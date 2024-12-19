@@ -5,7 +5,7 @@
   :depends-on (:arrows
                :cl-ppcre
                :str
-               :sqlite
+               :fare-memoization
                :cl-utilities)
   :components ((:module "src"
                 :components
